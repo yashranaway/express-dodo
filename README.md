@@ -39,3 +39,10 @@ npm run build && npm start
 - npm run dev – Start in dev with ts-node
 - npm run build – TypeScript compile to dist/
 - npm start – Run compiled server
+
+## Webhook verification
+
+This boilerplate uses `dodopayments-webhooks` for signature verification and typed payloads. The webhook route enables `express.json()` and calls the handler.
+
+- Library: https://github.com/sancho1952007/dodopayments-webhooks
+- Docs page: see `developer-resources/express-mongodb-boilerplate.mdx` for full example
