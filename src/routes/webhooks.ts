@@ -1,34 +1,24 @@
 import { Router } from 'express';
-import { raw } from 'express';
+import express from 'express';
 import { Subscription, Payment } from '../db/models';
-import { Webhook, type WebhookUnbrandedRequiredHeaders } from 'standardwebhooks';
+import { DodopaymentsHandler } from 'dodopayments-webhooks';
 
 const router = Router();
 
-// Use Standard Webhooks with your secret
-const webhook = new Webhook(process.env.DODO_WEBHOOK_SECRET as string);
+// Initialize universal webhook handler
+const handler = new DodopaymentsHandler({
+  signing_key: process.env.DODO_WEBHOOK_SECRET as string,
+});
 
-// Use raw body for signature verification (must not be pre-parsed by express.json())
-router.post('/', raw({ type: '*/*' }), async (req, res) => {
+// Parse JSON for this route (library expects JSON body/headers)
+router.post('/', express.json(), async (req, res) => {
   try {
-    const rawBody = req.body.toString('utf8');
+    // Let the handler verify and parse the event
+    const event = await handler.handle(req);
 
-    const headers: WebhookUnbrandedRequiredHeaders = {
-      'webhook-id': (req.header('webhook-id') || '') as string,
-      'webhook-signature': (req.header('webhook-signature') || '') as string,
-      'webhook-timestamp': (req.header('webhook-timestamp') || '') as string,
-    };
-
-    await webhook.verify(rawBody, headers);
-
-    const payload = JSON.parse(rawBody) as {
-      type: string;
-      data: any;
-    };
-
-    switch (payload.type) {
+    switch (event.type) {
       case 'subscription.active': {
-        const data = payload.data;
+        const data = event.data as any;
         await Subscription.updateOne(
           { subscriptionId: data.subscription_id },
           {
@@ -44,7 +34,7 @@ router.post('/', raw({ type: '*/*' }), async (req, res) => {
         break;
       }
       case 'subscription.on_hold': {
-        const data = payload.data;
+        const data = event.data as any;
         await Subscription.updateOne(
           { subscriptionId: data.subscription_id },
           { status: 'on_hold' }
@@ -52,7 +42,7 @@ router.post('/', raw({ type: '*/*' }), async (req, res) => {
         break;
       }
       case 'payment.succeeded': {
-        const p = payload.data;
+        const p = event.data as any;
         await Payment.updateOne(
           { paymentId: p.payment_id },
           {
@@ -68,7 +58,7 @@ router.post('/', raw({ type: '*/*' }), async (req, res) => {
         break;
       }
       case 'payment.failed': {
-        const p = payload.data;
+        const p = event.data as any;
         await Payment.updateOne(
           { paymentId: p.payment_id },
           { status: 'failed' }
@@ -82,7 +72,8 @@ router.post('/', raw({ type: '*/*' }), async (req, res) => {
 
     return res.json({ received: true });
   } catch (err: any) {
-    return res.status(400).json({ error: err.message });
+    // If verification or processing fails, respond non-2xx to trigger retry
+    return res.status(500).json({ error: err.message });
   }
 });
 

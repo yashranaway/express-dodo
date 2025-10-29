@@ -32,7 +32,7 @@ npm run build && npm start
 
 - POST /api/payments – Create one-time payment link
 - POST /api/subscriptions – Create subscription link
-- POST /webhooks/dodo – Webhook receiver (raw body, verified via standardwebhooks)
+- POST /webhooks/dodo – Webhook receiver (verified via `dodopayments-webhooks`)
 
 ## Scripts
 

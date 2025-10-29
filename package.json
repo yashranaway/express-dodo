@@ -13,10 +13,10 @@
   "dependencies": {
     "cors": "^2.8.5",
     "dodopayments": "^2.4.1",
+    "dodopayments-webhooks": "^1.1.2",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
-    "mongoose": "^8.19.2",
-    "standardwebhooks": "^1.0.0"
+    "mongoose": "^8.19.2"
   },
   "devDependencies": {
     "@types/cors": "^2.8.19",
