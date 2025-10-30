@@ -1,1 +1,5 @@
+.env
 node_modules/
+runs/
+bun.lock
+package-lock.json
