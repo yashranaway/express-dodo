@@ -39,6 +39,28 @@ npm run build && npm start
 - npm run dev – Start in dev with ts-node
 - npm run build – TypeScript compile to dist/
 - npm start – Run compiled server
+- npm test – Run tests
+- npm run test:watch – Run tests in watch mode
+- npm run test:coverage – Run tests with coverage report
+
+## Testing
+
+The project includes a comprehensive test suite using Jest and Supertest. Tests are located in the `tests/` directory.
+
+To run tests:
+```bash
+npm test
+```
+
+Tests cover all API endpoints (payments, subscriptions, webhooks) and include:
+- Request validation
+- Error handling
+- Database operations
+- Webhook event processing
+
+For more details, see [tests/README.md](tests/README.md).
+
+**Note:** Tests require a MongoDB instance. By default, tests connect to `mongodb://localhost:27017/dodo-test`. You can override this by setting the `MONGODB_URI` environment variable.
 
 ## Webhook verification
 
