@@ -3,3 +3,7 @@ node_modules/
 runs/
 bun.lock
 package-lock.json
+
+# Test coverage
+coverage/
+.nyc_output/
