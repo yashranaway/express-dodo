@@ -9,7 +9,7 @@ jest.mock('dodopayments-webhooks', () => ({
   DodopaymentsHandler: jest.fn().mockImplementation(() => ({
     handle: mockHandle,
   })),
-}));
+}), { virtual: true });
 
 import webhooksRouter from '../src/routes/webhooks';
 
