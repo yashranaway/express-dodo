@@ -5,6 +5,7 @@ import { Subscription, Payment } from '../src/db/models';
 // Mock the dodopayments-webhooks SDK before importing the router
 const mockHandle = jest.fn();
 jest.mock('dodopayments-webhooks', () => ({
+  __esModule: true,
   DodopaymentsHandler: jest.fn().mockImplementation(() => ({
     handle: mockHandle,
   })),

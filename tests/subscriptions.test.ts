@@ -5,13 +5,14 @@ import { mockSubscriptionPayload } from './helpers';
 
 // Mock the DodoPayments SDK before importing the router
 const mockCreateSubscription = jest.fn();
-jest.mock('dodopayments', () => {
-  return jest.fn().mockImplementation(() => ({
+jest.mock('dodopayments', () => ({
+  __esModule: true,
+  default: jest.fn().mockImplementation(() => ({
     subscriptions: {
       create: mockCreateSubscription,
     },
-  }));
-});
+  })),
+}));
 
 import subscriptionsRouter from '../src/routes/subscriptions';
 

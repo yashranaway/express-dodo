@@ -5,13 +5,14 @@ import { mockPaymentPayload } from './helpers';
 
 // Mock the DodoPayments SDK before importing the router
 const mockCreatePayment = jest.fn();
-jest.mock('dodopayments', () => {
-  return jest.fn().mockImplementation(() => ({
+jest.mock('dodopayments', () => ({
+  __esModule: true,
+  default: jest.fn().mockImplementation(() => ({
     payments: {
       create: mockCreatePayment,
     },
-  }));
-});
+  })),
+}));
 
 import paymentsRouter from '../src/routes/payments';
 
@@ -100,7 +101,7 @@ describe('Payments API', () => {
         status: 'pending',
       };
 
-      mockClient.payments.create.mockResolvedValue(mockResponse);
+      mockCreatePayment.mockResolvedValue(mockResponse);
 
       await request(app)
         .post('/api/payments')
