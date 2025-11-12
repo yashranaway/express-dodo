@@ -3,7 +3,6 @@ import express from 'express';
 import cors from 'cors';
 import { mockPaymentPayload } from './helpers';
 
-// Mock the DodoPayments SDK before importing the router
 const mockCreatePayment = jest.fn();
 jest.mock('dodopayments', () => ({
   __esModule: true,

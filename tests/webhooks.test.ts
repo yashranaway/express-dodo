@@ -2,24 +2,28 @@ import request from 'supertest';
 import express from 'express';
 import { Subscription, Payment } from '../src/db/models';
 
-// Mock the dodopayments-webhooks SDK before importing the router
-const mockHandle = jest.fn();
-jest.mock('dodopayments-webhooks', () => ({
+const mockUnwrap = jest.fn();
+const MockDodoPayments = jest.fn().mockImplementation(() => ({
+  webhooks: {
+    unwrap: mockUnwrap,
+  },
+}));
+
+jest.mock('dodopayments', () => ({
   __esModule: true,
-  DodopaymentsHandler: jest.fn().mockImplementation(() => ({
-    handle: mockHandle,
-  })),
-}), { virtual: true });
+  default: MockDodoPayments,
+}));
 
 import webhooksRouter from '../src/routes/webhooks';
 
 const app = express();
-app.use('/webhooks/dodo', express.json());
+app.use('/webhooks/dodo', express.raw({ type: 'application/json' }));
 app.use('/webhooks/dodo', webhooksRouter);
 
 describe('Webhooks API', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockUnwrap.mockClear();
   });
 
   describe('POST /webhooks/dodo', () => {
@@ -35,12 +39,17 @@ describe('Webhooks API', () => {
         },
       };
 
-      mockHandle.mockResolvedValue(mockEvent);
+      mockUnwrap.mockReturnValue(mockEvent);
 
       const response = await request(app)
         .post('/webhooks/dodo')
-        .send({})
+        .set('webhook-id', 'test-id')
+        .set('webhook-signature', 'test-signature')
+        .set('webhook-timestamp', '1234567890')
+        .send(JSON.stringify({}))
         .expect(200);
+
+      expect(mockUnwrap).toHaveBeenCalled();
 
       expect(response.body).toEqual({ received: true });
 
@@ -67,11 +76,14 @@ describe('Webhooks API', () => {
         },
       };
 
-      mockHandle.mockResolvedValue(mockEvent);
+      mockUnwrap.mockReturnValue(mockEvent);
 
       await request(app)
         .post('/webhooks/dodo')
-        .send({})
+        .set('webhook-id', 'test-id')
+        .set('webhook-signature', 'test-signature')
+        .set('webhook-timestamp', '1234567890')
+        .send(JSON.stringify({}))
         .expect(200);
 
       // Verify status was updated
@@ -91,11 +103,14 @@ describe('Webhooks API', () => {
         },
       };
 
-      mockHandle.mockResolvedValue(mockEvent);
+      mockUnwrap.mockReturnValue(mockEvent);
 
       const response = await request(app)
         .post('/webhooks/dodo')
-        .send({})
+        .set('webhook-id', 'test-id')
+        .set('webhook-signature', 'test-signature')
+        .set('webhook-timestamp', '1234567890')
+        .send(JSON.stringify({}))
         .expect(200);
 
       expect(response.body).toEqual({ received: true });
@@ -124,11 +139,14 @@ describe('Webhooks API', () => {
         },
       };
 
-      mockHandle.mockResolvedValue(mockEvent);
+      mockUnwrap.mockReturnValue(mockEvent);
 
       await request(app)
         .post('/webhooks/dodo')
-        .send({})
+        .set('webhook-id', 'test-id')
+        .set('webhook-signature', 'test-signature')
+        .set('webhook-timestamp', '1234567890')
+        .send(JSON.stringify({}))
         .expect(200);
 
       // Verify status was updated
@@ -142,11 +160,14 @@ describe('Webhooks API', () => {
         data: {},
       };
 
-      mockHandle.mockResolvedValue(mockEvent);
+      mockUnwrap.mockReturnValue(mockEvent);
 
       const response = await request(app)
         .post('/webhooks/dodo')
-        .send({})
+        .set('webhook-id', 'test-id')
+        .set('webhook-signature', 'test-signature')
+        .set('webhook-timestamp', '1234567890')
+        .send(JSON.stringify({}))
         .expect(200);
 
       expect(response.body).toEqual({ received: true });
@@ -154,11 +175,16 @@ describe('Webhooks API', () => {
 
     it('should return 500 if handler throws an error', async () => {
       const errorMessage = 'Invalid signature';
-      mockHandle.mockRejectedValue(new Error(errorMessage));
+      mockUnwrap.mockImplementation(() => {
+        throw new Error(errorMessage);
+      });
 
       const response = await request(app)
         .post('/webhooks/dodo')
-        .send({})
+        .set('webhook-id', 'test-id')
+        .set('webhook-signature', 'test-signature')
+        .set('webhook-timestamp', '1234567890')
+        .send(JSON.stringify({}))
         .expect(500);
 
       expect(response.body).toHaveProperty('error');
@@ -183,11 +209,14 @@ describe('Webhooks API', () => {
         },
       };
 
-      mockHandle.mockResolvedValue(mockEvent);
+      mockUnwrap.mockReturnValue(mockEvent);
 
       await request(app)
         .post('/webhooks/dodo')
-        .send({})
+        .set('webhook-id', 'test-id')
+        .set('webhook-signature', 'test-signature')
+        .set('webhook-timestamp', '1234567890')
+        .send(JSON.stringify({}))
         .expect(200);
 
       // Verify it was updated, not duplicated
@@ -215,11 +244,14 @@ describe('Webhooks API', () => {
         },
       };
 
-      mockHandle.mockResolvedValue(mockEvent);
+      mockUnwrap.mockReturnValue(mockEvent);
 
       await request(app)
         .post('/webhooks/dodo')
-        .send({})
+        .set('webhook-id', 'test-id')
+        .set('webhook-signature', 'test-signature')
+        .set('webhook-timestamp', '1234567890')
+        .send(JSON.stringify({}))
         .expect(200);
 
       // Verify it was updated, not duplicated

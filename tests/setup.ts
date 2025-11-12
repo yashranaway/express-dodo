@@ -1,8 +1,15 @@
+// Set test env vars before imports (routes need them at module load)
+if (!process.env.DODO_PAYMENTS_API_KEY) {
+  process.env.DODO_PAYMENTS_API_KEY = 'test-api-key';
+}
+if (!process.env.DODO_WEBHOOK_SECRET) {
+  process.env.DODO_WEBHOOK_SECRET = 'test-webhook-secret';
+}
+
 import { connectDB } from '../src/db/client';
 import mongoose from 'mongoose';
 import { MongoMemoryServer } from 'mongodb-memory-server';
 
-// Load environment variables
 require('dotenv').config();
 
 let mongoServer: MongoMemoryServer;

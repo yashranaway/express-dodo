@@ -32,7 +32,7 @@ npm run build && npm start
 
 - POST /api/payments – Create one-time payment link
 - POST /api/subscriptions – Create subscription link
-- POST /webhooks/dodo – Webhook receiver (verified via `dodopayments-webhooks`)
+- POST /webhooks/dodo – Webhook receiver (verified via `dodopayments` SDK)
 
 ## Scripts
 
@@ -64,7 +64,6 @@ For more details, see [tests/README.md](tests/README.md).
 
 ## Webhook verification
 
-This boilerplate uses `dodopayments-webhooks` for signature verification and typed payloads. The webhook route enables `express.json()` and calls the handler.
+This boilerplate uses the built-in webhook verification from the `dodopayments` SDK. The webhook route uses `express.raw()` to receive the raw body and verifies signatures using `client.webhooks.unwrap()`.
 
-- Library: https://github.com/sancho1952007/dodopayments-webhooks
-- Docs page: see `developer-resources/express-mongodb-boilerplate.mdx` for full example
+- Documentation: https://docs.dodopayments.com/developer-resources/webhooks#sdk-verification-recommended

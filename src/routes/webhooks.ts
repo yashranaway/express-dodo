@@ -1,30 +1,40 @@
-import { Router } from 'express';
+import { Router, Request, Response } from 'express';
 import express from 'express';
 import { Subscription, Payment } from '../db/models';
-import { DodopaymentsHandler } from 'dodopayments-webhooks';
-import {
-  SubscriptionActiveData,
-  SubscriptionOnHoldData,
-  PaymentSucceededData,
-  PaymentFailedData,
-} from '../types/webhooks';
+import DodoPayments from 'dodopayments';
+import { WebhookEvent } from '../types/webhooks';
+import { getEnvVar } from '../utils/env';
 
 const router = Router();
 
-// Initialize universal webhook handler
-const handler = new DodopaymentsHandler({
-  signing_key: process.env.DODO_WEBHOOK_SECRET as string,
+const client = new DodoPayments({
+  bearerToken: getEnvVar('DODO_PAYMENTS_API_KEY'),
+  webhookKey: getEnvVar('DODO_WEBHOOK_SECRET'),
 });
 
-// Parse JSON for this route (library expects JSON body/headers)
-router.post('/', express.json(), async (req, res) => {
+router.post('/', express.raw({ type: 'application/json' }), async (req: Request, res: Response): Promise<void> => {
   try {
-    // Let the handler verify and parse the event
-    const event = await handler.handle(req);
+    const webhookId = req.headers['webhook-id'];
+    const webhookSignature = req.headers['webhook-signature'];
+    const webhookTimestamp = req.headers['webhook-timestamp'];
+
+    if (!webhookId || !webhookSignature || !webhookTimestamp) {
+      res.status(400).json({ error: 'Missing required webhook headers' });
+      return;
+    }
+
+    const body = req.body instanceof Buffer ? req.body.toString() : JSON.stringify(req.body || {});
+    const event = client.webhooks.unwrap(body, {
+      headers: {
+        'webhook-id': String(webhookId),
+        'webhook-signature': String(webhookSignature),
+        'webhook-timestamp': String(webhookTimestamp),
+      },
+    }) as WebhookEvent;
 
     switch (event.type) {
       case 'subscription.active': {
-        const data = event.data as SubscriptionActiveData;
+        const data = event.data;
         await Subscription.updateOne(
           { subscriptionId: data.subscription_id },
           {
@@ -42,7 +52,7 @@ router.post('/', express.json(), async (req, res) => {
         break;
       }
       case 'subscription.on_hold': {
-        const data = event.data as SubscriptionOnHoldData;
+        const data = event.data;
         await Subscription.updateOne(
           { subscriptionId: data.subscription_id },
           { status: 'on_hold' }
@@ -50,7 +60,7 @@ router.post('/', express.json(), async (req, res) => {
         break;
       }
       case 'payment.succeeded': {
-        const p = event.data as PaymentSucceededData;
+        const p = event.data;
         await Payment.updateOne(
           { paymentId: p.payment_id },
           {
@@ -66,7 +76,7 @@ router.post('/', express.json(), async (req, res) => {
         break;
       }
       case 'payment.failed': {
-        const p = event.data as PaymentFailedData;
+        const p = event.data;
         await Payment.updateOne(
           { paymentId: p.payment_id },
           { status: 'failed' }
@@ -74,15 +84,13 @@ router.post('/', express.json(), async (req, res) => {
         break;
       }
       default:
-        // ignore unknown events
         break;
     }
 
-    return res.json({ received: true });
+    res.json({ received: true });
   } catch (err) {
-    // If verification or processing fails, respond non-2xx to trigger retry
     const errorMessage = err instanceof Error ? err.message : 'Unknown error';
-    return res.status(500).json({ error: errorMessage });
+    res.status(500).json({ error: errorMessage });
   }
 });
 

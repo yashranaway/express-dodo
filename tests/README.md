@@ -89,8 +89,7 @@ When adding new tests:
 ## Mocking
 
 Tests mock external dependencies:
-- `dodopayments` SDK - Payments and subscriptions API calls
-- `dodopayments-webhooks` SDK - Webhook verification and parsing
+- `dodopayments` SDK - Payments, subscriptions API calls, and webhook verification
 
 This ensures tests run quickly and don't make actual API calls or require API keys during testing.
 

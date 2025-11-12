@@ -1,7 +1,3 @@
-/**
- * Helper utilities for testing
- */
-
 export const mockPaymentPayload = {
   billing: {
     address: {

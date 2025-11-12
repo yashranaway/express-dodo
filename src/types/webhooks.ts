@@ -1,7 +1,3 @@
-/**
- * Type definitions for Dodo Payments webhook events
- */
-
 export interface WebhookCustomer {
   customer_id: string;
   email?: string;
@@ -32,3 +28,8 @@ export interface PaymentFailedData {
   payment_id: string;
 }
 
+export type WebhookEvent =
+  | { type: 'subscription.active'; data: SubscriptionActiveData }
+  | { type: 'subscription.on_hold'; data: SubscriptionOnHoldData }
+  | { type: 'payment.succeeded'; data: PaymentSucceededData }
+  | { type: 'payment.failed'; data: PaymentFailedData };

@@ -1,10 +1,11 @@
-import { Router } from 'express';
+import { Router, Request, Response } from 'express';
 import DodoPayments from 'dodopayments';
+import { getEnvVar } from '../utils/env';
 
-const client = new DodoPayments({ bearerToken: process.env.DODO_PAYMENTS_API_KEY });
 const router = Router();
+const client = new DodoPayments({ bearerToken: getEnvVar('DODO_PAYMENTS_API_KEY') });
 
-router.post('/', async (req, res) => {
+router.post('/', async (req: Request, res: Response): Promise<void> => {
   try {
     const {
       billing,
@@ -19,7 +20,8 @@ router.post('/', async (req, res) => {
     } = req.body;
 
     if (!billing || !customer || !product_cart) {
-      return res.status(400).json({ error: 'billing, customer, and product_cart are required' });
+      res.status(400).json({ error: 'billing, customer, and product_cart are required' });
+      return;
     }
 
     const payment = await client.payments.create({
