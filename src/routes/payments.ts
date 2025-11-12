@@ -36,8 +36,9 @@ router.post('/', async (req, res) => {
     });
 
     res.json(payment);
-  } catch (err: any) {
-    res.status(400).json({ error: err.message });
+  } catch (err) {
+    const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+    res.status(400).json({ error: errorMessage });
   }
 });
 

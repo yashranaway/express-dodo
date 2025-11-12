@@ -2,6 +2,12 @@ import { Router } from 'express';
 import express from 'express';
 import { Subscription, Payment } from '../db/models';
 import { DodopaymentsHandler } from 'dodopayments-webhooks';
+import {
+  SubscriptionActiveData,
+  SubscriptionOnHoldData,
+  PaymentSucceededData,
+  PaymentFailedData,
+} from '../types/webhooks';
 
 const router = Router();
 
@@ -18,7 +24,7 @@ router.post('/', express.json(), async (req, res) => {
 
     switch (event.type) {
       case 'subscription.active': {
-        const data = event.data as any;
+        const data = event.data as SubscriptionActiveData;
         await Subscription.updateOne(
           { subscriptionId: data.subscription_id },
           {
@@ -26,7 +32,9 @@ router.post('/', express.json(), async (req, res) => {
             status: 'active',
             productId: data.product_id,
             customerId: data.customer?.customer_id,
-            currentPeriodEnd: data.current_period_end ? new Date(data.current_period_end) : undefined,
+            currentPeriodEnd: data.current_period_end
+              ? new Date(data.current_period_end)
+              : undefined,
             metadata: data.metadata || {},
           },
           { upsert: true }
@@ -34,7 +42,7 @@ router.post('/', express.json(), async (req, res) => {
         break;
       }
       case 'subscription.on_hold': {
-        const data = event.data as any;
+        const data = event.data as SubscriptionOnHoldData;
         await Subscription.updateOne(
           { subscriptionId: data.subscription_id },
           { status: 'on_hold' }
@@ -42,7 +50,7 @@ router.post('/', express.json(), async (req, res) => {
         break;
       }
       case 'payment.succeeded': {
-        const p = event.data as any;
+        const p = event.data as PaymentSucceededData;
         await Payment.updateOne(
           { paymentId: p.payment_id },
           {
@@ -58,7 +66,7 @@ router.post('/', express.json(), async (req, res) => {
         break;
       }
       case 'payment.failed': {
-        const p = event.data as any;
+        const p = event.data as PaymentFailedData;
         await Payment.updateOne(
           { paymentId: p.payment_id },
           { status: 'failed' }
@@ -71,9 +79,10 @@ router.post('/', express.json(), async (req, res) => {
     }
 
     return res.json({ received: true });
-  } catch (err: any) {
+  } catch (err) {
     // If verification or processing fails, respond non-2xx to trigger retry
-    return res.status(500).json({ error: err.message });
+    const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+    return res.status(500).json({ error: errorMessage });
   }
 });
 
