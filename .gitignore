@@ -7,3 +7,8 @@ package-lock.json
 # Test coverage
 coverage/
 .nyc_output/
+
+# Logs
+*.log
+error.log
+combined.log

@@ -13,6 +13,21 @@ jest.mock('dodopayments', () => ({
   })),
 }));
 
+import { Request, Response, NextFunction } from 'express';
+
+jest.mock('../src/middleware/rateLimiter', () => ({
+  apiRateLimiter: (_req: Request, _res: Response, next: NextFunction) => next(),
+  webhookRateLimiter: (_req: Request, _res: Response, next: NextFunction) => next(),
+}));
+
+jest.mock('../src/utils/logger', () => ({
+  logger: {
+    info: jest.fn(),
+    error: jest.fn(),
+    warn: jest.fn(),
+  },
+}));
+
 import subscriptionsRouter from '../src/routes/subscriptions';
 
 const app = express();
@@ -61,7 +76,8 @@ describe('Subscriptions API', () => {
         .expect(400);
 
       expect(response.body).toHaveProperty('error');
-      expect(response.body.error).toContain('billing, customer, product_id, and quantity are required');
+      expect(response.body.error).toBe('Validation failed');
+      expect(response.body.details).toBeInstanceOf(Array);
     });
 
     it('should return 400 if customer is missing', async () => {
@@ -73,7 +89,8 @@ describe('Subscriptions API', () => {
         .expect(400);
 
       expect(response.body).toHaveProperty('error');
-      expect(response.body.error).toContain('billing, customer, product_id, and quantity are required');
+      expect(response.body.error).toBe('Validation failed');
+      expect(response.body.details).toBeInstanceOf(Array);
     });
 
     it('should return 400 if product_id is missing', async () => {
@@ -85,7 +102,8 @@ describe('Subscriptions API', () => {
         .expect(400);
 
       expect(response.body).toHaveProperty('error');
-      expect(response.body.error).toContain('billing, customer, product_id, and quantity are required');
+      expect(response.body.error).toBe('Validation failed');
+      expect(response.body.details).toBeInstanceOf(Array);
     });
 
     it('should return 400 if quantity is missing', async () => {
@@ -97,7 +115,8 @@ describe('Subscriptions API', () => {
         .expect(400);
 
       expect(response.body).toHaveProperty('error');
-      expect(response.body.error).toContain('billing, customer, product_id, and quantity are required');
+      expect(response.body.error).toBe('Validation failed');
+      expect(response.body.details).toBeInstanceOf(Array);
     });
 
     it('should handle optional fields', async () => {

@@ -13,6 +13,21 @@ jest.mock('dodopayments', () => ({
   })),
 }));
 
+import { Request, Response, NextFunction } from 'express';
+
+jest.mock('../src/middleware/rateLimiter', () => ({
+  apiRateLimiter: (_req: Request, _res: Response, next: NextFunction) => next(),
+  webhookRateLimiter: (_req: Request, _res: Response, next: NextFunction) => next(),
+}));
+
+jest.mock('../src/utils/logger', () => ({
+  logger: {
+    info: jest.fn(),
+    error: jest.fn(),
+    warn: jest.fn(),
+  },
+}));
+
 import paymentsRouter from '../src/routes/payments';
 
 const app = express();
@@ -60,7 +75,8 @@ describe('Payments API', () => {
         .expect(400);
 
       expect(response.body).toHaveProperty('error');
-      expect(response.body.error).toContain('billing, customer, and product_cart are required');
+      expect(response.body.error).toBe('Validation failed');
+      expect(response.body.details).toBeInstanceOf(Array);
     });
 
     it('should return 400 if customer is missing', async () => {
@@ -72,7 +88,8 @@ describe('Payments API', () => {
         .expect(400);
 
       expect(response.body).toHaveProperty('error');
-      expect(response.body.error).toContain('billing, customer, and product_cart are required');
+      expect(response.body.error).toBe('Validation failed');
+      expect(response.body.details).toBeInstanceOf(Array);
     });
 
     it('should return 400 if product_cart is missing', async () => {
@@ -84,7 +101,8 @@ describe('Payments API', () => {
         .expect(400);
 
       expect(response.body).toHaveProperty('error');
-      expect(response.body.error).toContain('billing, customer, and product_cart are required');
+      expect(response.body.error).toBe('Validation failed');
+      expect(response.body.details).toBeInstanceOf(Array);
     });
 
     it('should handle optional fields', async () => {

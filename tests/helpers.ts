@@ -41,7 +41,21 @@ export const mockSubscriptionPayload = {
   return_url: 'https://example.com/return',
 };
 
-export const mockWebhookPayload = (eventType: string, data: any) => ({
+import {
+  SubscriptionActiveData,
+  SubscriptionOnHoldData,
+  PaymentSucceededData,
+  PaymentFailedData,
+} from '../src/types/webhooks';
+
+type WebhookData =
+  | SubscriptionActiveData
+  | SubscriptionOnHoldData
+  | PaymentSucceededData
+  | PaymentFailedData
+  | Record<string, unknown>;
+
+export const mockWebhookPayload = (eventType: string, data: WebhookData) => ({
   type: eventType,
   data,
   timestamp: Date.now(),

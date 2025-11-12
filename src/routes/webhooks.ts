@@ -4,6 +4,7 @@ import { Subscription, Payment } from '../db/models';
 import DodoPayments from 'dodopayments';
 import { WebhookEvent } from '../types/webhooks';
 import { getEnvVar } from '../utils/env';
+import { logger } from '../utils/logger';
 
 const router = Router();
 
@@ -19,18 +20,29 @@ router.post('/', express.raw({ type: 'application/json' }), async (req: Request,
     const webhookTimestamp = req.headers['webhook-timestamp'];
 
     if (!webhookId || !webhookSignature || !webhookTimestamp) {
+      logger.warn('Missing webhook headers', { headers: req.headers });
       res.status(400).json({ error: 'Missing required webhook headers' });
       return;
     }
 
     const body = req.body instanceof Buffer ? req.body.toString() : JSON.stringify(req.body || {});
-    const event = client.webhooks.unwrap(body, {
-      headers: {
-        'webhook-id': String(webhookId),
-        'webhook-signature': String(webhookSignature),
-        'webhook-timestamp': String(webhookTimestamp),
-      },
-    }) as WebhookEvent;
+    
+    let event: WebhookEvent;
+    try {
+      event = client.webhooks.unwrap(body, {
+        headers: {
+          'webhook-id': String(webhookId),
+          'webhook-signature': String(webhookSignature),
+          'webhook-timestamp': String(webhookTimestamp),
+        },
+      }) as WebhookEvent;
+    } catch (verifyError) {
+      logger.error('Webhook signature verification failed', { error: verifyError, webhookId });
+      res.status(400).json({ error: 'Invalid webhook signature' });
+      return;
+    }
+
+    logger.info('Webhook received', { type: event.type, webhookId });
 
     switch (event.type) {
       case 'subscription.active': {
@@ -49,6 +61,7 @@ router.post('/', express.raw({ type: 'application/json' }), async (req: Request,
           },
           { upsert: true }
         );
+        logger.info('Subscription activated', { subscriptionId: data.subscription_id });
         break;
       }
       case 'subscription.on_hold': {
@@ -57,6 +70,7 @@ router.post('/', express.raw({ type: 'application/json' }), async (req: Request,
           { subscriptionId: data.subscription_id },
           { status: 'on_hold' }
         );
+        logger.info('Subscription put on hold', { subscriptionId: data.subscription_id });
         break;
       }
       case 'payment.succeeded': {
@@ -73,6 +87,7 @@ router.post('/', express.raw({ type: 'application/json' }), async (req: Request,
           },
           { upsert: true }
         );
+        logger.info('Payment succeeded', { paymentId: p.payment_id });
         break;
       }
       case 'payment.failed': {
@@ -81,16 +96,18 @@ router.post('/', express.raw({ type: 'application/json' }), async (req: Request,
           { paymentId: p.payment_id },
           { status: 'failed' }
         );
+        logger.info('Payment failed', { paymentId: p.payment_id });
         break;
       }
       default:
+        logger.warn('Unknown webhook event type', { type: (event as { type: string }).type });
         break;
     }
 
     res.json({ received: true });
   } catch (err) {
-    const errorMessage = err instanceof Error ? err.message : 'Unknown error';
-    res.status(500).json({ error: errorMessage });
+    logger.error('Webhook processing failed', { error: err });
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 

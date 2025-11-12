@@ -14,6 +14,21 @@ jest.mock('dodopayments', () => ({
   default: MockDodoPayments,
 }));
 
+import { Request, Response, NextFunction } from 'express';
+
+jest.mock('../src/middleware/rateLimiter', () => ({
+  apiRateLimiter: (_req: Request, _res: Response, next: NextFunction) => next(),
+  webhookRateLimiter: (_req: Request, _res: Response, next: NextFunction) => next(),
+}));
+
+jest.mock('../src/utils/logger', () => ({
+  logger: {
+    info: jest.fn(),
+    error: jest.fn(),
+    warn: jest.fn(),
+  },
+}));
+
 import webhooksRouter from '../src/routes/webhooks';
 
 const app = express();
@@ -173,10 +188,9 @@ describe('Webhooks API', () => {
       expect(response.body).toEqual({ received: true });
     });
 
-    it('should return 500 if handler throws an error', async () => {
-      const errorMessage = 'Invalid signature';
+    it('should return 400 if signature verification fails', async () => {
       mockUnwrap.mockImplementation(() => {
-        throw new Error(errorMessage);
+        throw new Error('Invalid signature');
       });
 
       const response = await request(app)
@@ -185,10 +199,10 @@ describe('Webhooks API', () => {
         .set('webhook-signature', 'test-signature')
         .set('webhook-timestamp', '1234567890')
         .send(JSON.stringify({}))
-        .expect(500);
+        .expect(400);
 
       expect(response.body).toHaveProperty('error');
-      expect(response.body.error).toBe(errorMessage);
+      expect(response.body.error).toBe('Invalid webhook signature');
     });
 
     it('should upsert subscription on subscription.active', async () => {

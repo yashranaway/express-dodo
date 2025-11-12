@@ -1,0 +1,28 @@
+import { Request, Response, NextFunction } from 'express';
+import { z, ZodError } from 'zod';
+import { logger } from '../utils/logger';
+
+export const validateRequest = (schema: z.ZodSchema) => {
+  return (req: Request, res: Response, next: NextFunction): void => {
+    try {
+      schema.parse(req.body);
+      next();
+    } catch (error: unknown) {
+      if (error instanceof ZodError) {
+        const errors = error.errors.map((err) => ({
+          path: err.path.join('.'),
+          message: err.message,
+        }));
+        logger.warn('Validation error', { errors, path: req.path });
+        res.status(400).json({
+          error: 'Validation failed',
+          details: errors,
+        });
+        return;
+      }
+      logger.error('Unexpected validation error', { error });
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  };
+};
+
