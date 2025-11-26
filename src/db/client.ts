@@ -7,7 +7,7 @@ export async function connectDB(uri: string): Promise<void> {
   }
 
   try {
-    await mongoose.connect(uri, { dbName: 'dodo' });
+  await mongoose.connect(uri, { dbName: 'dodo' });
     logger.info('Connected to MongoDB');
   } catch (error) {
     logger.error('MongoDB connection error', { error });

@@ -23,24 +23,24 @@ router.post('/', validateRequest(createSubscriptionSchema), async (req: Request,
       trial_period_days,
     } = req.body;
 
-    const sub = await client.subscriptions.create({
-      billing,
+    const sub = await client.checkoutSessions.create({
+      billing_address: billing,
       customer,
-      product_id,
-      quantity,
-      payment_link: true,
+      product_cart: [{ product_id, quantity }],
       return_url,
       metadata,
       discount_code,
       show_saved_payment_methods,
-      tax_id,
-      trial_period_days,
+      subscription_data: {
+        trial_period_days,
+      },
+      confirm: false,
     });
 
-    logger.info('Subscription created', { subscriptionId: sub.subscription_id });
+    logger.info('Checkout session created', { sessionId: sub.session_id });
     res.json(sub);
   } catch (err) {
-    logger.error('Subscription creation failed', { error: err });
+    logger.error('Checkout session creation failed', { error: err });
     const errorMessage = err instanceof Error ? err.message : 'Unknown error';
     const statusCode = err instanceof Error && 'statusCode' in err ? (err.statusCode as number) : 400;
     res.status(statusCode).json({ error: errorMessage });

@@ -32,9 +32,9 @@ async function bootstrap() {
     }
     await connectDB(mongoUri);
 
-    app.use('/api/payments', paymentsRouter);
-    app.use('/api/subscriptions', subsRouter);
-    app.use('/webhooks/dodo', webhooksRouter);
+  app.use('/api/payments', paymentsRouter);
+  app.use('/api/subscriptions', subsRouter);
+  app.use('/webhooks/dodo', webhooksRouter);
 
     const port = Number(getEnvVarOptional('PORT', '3000'));
     if (isNaN(port) || port < 1 || port > 65535) {

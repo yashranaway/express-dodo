@@ -19,26 +19,24 @@ router.post('/', validateRequest(createPaymentSchema), async (req: Request, res:
       allowed_payment_method_types,
       discount_code,
       show_saved_payment_methods,
-      tax_id,
     } = req.body;
 
-    const payment = await client.payments.create({
-      billing,
+    const payment = await client.checkoutSessions.create({
+      billing_address: billing,
       customer,
       product_cart,
-      payment_link: true,
       return_url,
       metadata,
       allowed_payment_method_types,
       discount_code,
       show_saved_payment_methods,
-      tax_id,
+      confirm: false,
     });
 
-    logger.info('Payment created', { paymentId: payment.payment_id });
+    logger.info('Checkout session created', { sessionId: payment.session_id });
     res.json(payment);
   } catch (err) {
-    logger.error('Payment creation failed', { error: err });
+    logger.error('Checkout session creation failed', { error: err });
     const errorMessage = err instanceof Error ? err.message : 'Unknown error';
     const statusCode = err instanceof Error && 'statusCode' in err ? (err.statusCode as number) : 400;
     res.status(statusCode).json({ error: errorMessage });
