@@ -12,3 +12,4 @@ coverage/
 *.log
 error.log
 combined.log
+dist/
