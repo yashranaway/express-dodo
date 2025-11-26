@@ -3,12 +3,12 @@ import express from 'express';
 import cors from 'cors';
 import { mockPaymentPayload } from './helpers';
 
-const mockCreatePayment = jest.fn();
+const mockCreateCheckoutSession = jest.fn();
 jest.mock('dodopayments', () => ({
   __esModule: true,
   default: jest.fn().mockImplementation(() => ({
-    payments: {
-      create: mockCreatePayment,
+    checkoutSessions: {
+      create: mockCreateCheckoutSession,
     },
   })),
 }));
@@ -43,12 +43,11 @@ describe('Payments API', () => {
   describe('POST /api/payments', () => {
     it('should create a payment successfully', async () => {
       const mockResponse = {
-        payment_id: 'pay_123',
-        status: 'pending',
-        payment_link: 'https://pay.dodo.com/link_123',
+        session_id: 'cs_123',
+        checkout_url: 'https://checkout.dodo.com/cs_123',
       };
 
-      mockCreatePayment.mockResolvedValue(mockResponse);
+      mockCreateCheckoutSession.mockResolvedValue(mockResponse);
 
       const response = await request(app)
         .post('/api/payments')
@@ -56,12 +55,12 @@ describe('Payments API', () => {
         .expect(200);
 
       expect(response.body).toEqual(mockResponse);
-      expect(mockCreatePayment).toHaveBeenCalledWith(
+      expect(mockCreateCheckoutSession).toHaveBeenCalledWith(
         expect.objectContaining({
-          billing: mockPaymentPayload.billing,
+          billing_address: mockPaymentPayload.billing.address,
           customer: mockPaymentPayload.customer,
           product_cart: mockPaymentPayload.product_cart,
-          payment_link: true,
+          confirm: false,
         })
       );
     });
@@ -114,18 +113,18 @@ describe('Payments API', () => {
       };
 
       const mockResponse = {
-        payment_id: 'pay_123',
-        status: 'pending',
+        session_id: 'cs_123',
+        checkout_url: 'https://checkout.dodo.com/cs_123',
       };
 
-      mockCreatePayment.mockResolvedValue(mockResponse);
+      mockCreateCheckoutSession.mockResolvedValue(mockResponse);
 
       await request(app)
         .post('/api/payments')
         .send(payloadWithOptionalFields)
         .expect(200);
 
-      expect(mockCreatePayment).toHaveBeenCalledWith(
+      expect(mockCreateCheckoutSession).toHaveBeenCalledWith(
         expect.objectContaining({
           metadata: { order_id: '123' },
           return_url: 'https://example.com/custom-return',
@@ -136,7 +135,7 @@ describe('Payments API', () => {
 
     it('should return 400 if DodoPayments API throws an error', async () => {
       const errorMessage = 'Invalid payment data';
-      mockCreatePayment.mockRejectedValue(new Error(errorMessage));
+      mockCreateCheckoutSession.mockRejectedValue(new Error(errorMessage));
 
       const response = await request(app)
         .post('/api/payments')

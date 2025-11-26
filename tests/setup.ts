@@ -5,6 +5,9 @@ if (!process.env.DODO_PAYMENTS_API_KEY) {
 if (!process.env.DODO_WEBHOOK_SECRET) {
   process.env.DODO_WEBHOOK_SECRET = 'test-webhook-secret';
 }
+if (!process.env.DODO_ENVIRONMENT) {
+  process.env.DODO_ENVIRONMENT = 'test_mode';
+}
 
 import { connectDB } from '../src/db/client';
 import mongoose from 'mongoose';

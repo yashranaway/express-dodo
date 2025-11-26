@@ -32,7 +32,7 @@ router.post('/',
         subscription_data: {
           trial_period_days,
         },
-        confirm: true,
+        confirm: false,
       });
 
       logger.info('Checkout session created', { sessionId: sub.session_id });

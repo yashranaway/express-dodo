@@ -3,12 +3,12 @@ import express from 'express';
 import cors from 'cors';
 import { mockSubscriptionPayload } from './helpers';
 
-const mockCreateSubscription = jest.fn();
+const mockCreateCheckoutSession = jest.fn();
 jest.mock('dodopayments', () => ({
   __esModule: true,
   default: jest.fn().mockImplementation(() => ({
-    subscriptions: {
-      create: mockCreateSubscription,
+    checkoutSessions: {
+      create: mockCreateCheckoutSession,
     },
   })),
 }));
@@ -43,12 +43,11 @@ describe('Subscriptions API', () => {
   describe('POST /api/subscriptions', () => {
     it('should create a subscription successfully', async () => {
       const mockResponse = {
-        subscription_id: 'sub_123',
-        status: 'pending',
-        payment_link: 'https://pay.dodo.com/link_123',
+        session_id: 'cs_123',
+        checkout_url: 'https://checkout.dodo.com/cs_123',
       };
 
-      mockCreateSubscription.mockResolvedValue(mockResponse);
+      mockCreateCheckoutSession.mockResolvedValue(mockResponse);
 
       const response = await request(app)
         .post('/api/subscriptions')
@@ -56,13 +55,12 @@ describe('Subscriptions API', () => {
         .expect(200);
 
       expect(response.body).toEqual(mockResponse);
-      expect(mockCreateSubscription).toHaveBeenCalledWith(
+      expect(mockCreateCheckoutSession).toHaveBeenCalledWith(
         expect.objectContaining({
-          billing: mockSubscriptionPayload.billing,
+          billing_address: mockSubscriptionPayload.billing.address,
           customer: mockSubscriptionPayload.customer,
-          product_id: mockSubscriptionPayload.product_id,
-          quantity: mockSubscriptionPayload.quantity,
-          payment_link: true,
+          product_cart: mockSubscriptionPayload.product_cart,
+          confirm: false,
         })
       );
     });
@@ -93,25 +91,12 @@ describe('Subscriptions API', () => {
       expect(response.body.details).toBeInstanceOf(Array);
     });
 
-    it('should return 400 if product_id is missing', async () => {
-      const { product_id, ...payloadWithoutProductId } = mockSubscriptionPayload;
+    it('should return 400 if product_cart is missing', async () => {
+      const { product_cart, ...payloadWithoutProductCart } = mockSubscriptionPayload;
 
       const response = await request(app)
         .post('/api/subscriptions')
-        .send(payloadWithoutProductId)
-        .expect(400);
-
-      expect(response.body).toHaveProperty('error');
-      expect(response.body.error).toBe('Validation failed');
-      expect(response.body.details).toBeInstanceOf(Array);
-    });
-
-    it('should return 400 if quantity is missing', async () => {
-      const { quantity, ...payloadWithoutQuantity } = mockSubscriptionPayload;
-
-      const response = await request(app)
-        .post('/api/subscriptions')
-        .send(payloadWithoutQuantity)
+        .send(payloadWithoutProductCart)
         .expect(400);
 
       expect(response.body).toHaveProperty('error');
@@ -129,30 +114,32 @@ describe('Subscriptions API', () => {
       };
 
       const mockResponse = {
-        subscription_id: 'sub_123',
-        status: 'pending',
+        session_id: 'cs_123',
+        checkout_url: 'https://checkout.dodo.com/cs_123',
       };
 
-      mockCreateSubscription.mockResolvedValue(mockResponse);
+      mockCreateCheckoutSession.mockResolvedValue(mockResponse);
 
       await request(app)
         .post('/api/subscriptions')
         .send(payloadWithOptionalFields)
         .expect(200);
 
-      expect(mockCreateSubscription).toHaveBeenCalledWith(
+      expect(mockCreateCheckoutSession).toHaveBeenCalledWith(
         expect.objectContaining({
           metadata: { plan: 'premium' },
           return_url: 'https://example.com/custom-return',
           discount_code: 'DISCOUNT10',
-          trial_period_days: 7,
+          subscription_data: {
+            trial_period_days: 7,
+          },
         })
       );
     });
 
     it('should return 400 if DodoPayments API throws an error', async () => {
       const errorMessage = 'Invalid subscription data';
-      mockCreateSubscription.mockRejectedValue(new Error(errorMessage));
+      mockCreateCheckoutSession.mockRejectedValue(new Error(errorMessage));
 
       const response = await request(app)
         .post('/api/subscriptions')

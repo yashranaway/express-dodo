@@ -28,7 +28,7 @@ router.post('/', validateRequest(createPaymentSchema), async (req: Request, res:
       allowed_payment_method_types,
       discount_code,
       show_saved_payment_methods,
-      confirm: true,
+      confirm: false,
     });
 
     logger.info('Checkout session created', { sessionId: payment.session_id });
