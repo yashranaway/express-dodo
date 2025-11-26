@@ -1,17 +1,11 @@
 import { Router, Request, Response } from 'express';
 import express from 'express';
 import { Subscription, Payment } from '../db/models';
-import DodoPayments from 'dodopayments';
 import { WebhookEvent } from '../types/webhooks';
-import { getEnvVar } from '../utils/env';
 import { logger } from '../utils/logger';
+import DodoClient from '../utils/dodo-client';
 
 const router = Router();
-
-const client = new DodoPayments({
-  bearerToken: getEnvVar('DODO_PAYMENTS_API_KEY'),
-  webhookKey: getEnvVar('DODO_WEBHOOK_SECRET'),
-});
 
 router.post('/', express.raw({ type: 'application/json' }), async (req: Request, res: Response): Promise<void> => {
   try {
@@ -26,10 +20,10 @@ router.post('/', express.raw({ type: 'application/json' }), async (req: Request,
     }
 
     const body = req.body instanceof Buffer ? req.body.toString() : JSON.stringify(req.body || {});
-    
+
     let event: WebhookEvent;
     try {
-      event = client.webhooks.unwrap(body, {
+      event = DodoClient.webhooks.unwrap(body, {
         headers: {
           'webhook-id': String(webhookId),
           'webhook-signature': String(webhookSignature),
