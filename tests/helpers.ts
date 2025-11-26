@@ -1,44 +1,49 @@
 export const mockPaymentPayload = {
-  billing: {
-    address: {
-      line1: '123 Main St',
-      city: 'San Francisco',
-      state: 'CA',
-      postal_code: '94102',
-      country: 'US',
-    },
+  "billing": {
+    "address": {
+      "city": "San Francisco",
+      "country": "US",
+      "state": "CA",
+      "street": "123 Main St",
+      "zipcode": "94102"
+    }
   },
-  customer: {
-    email: 'test@example.com',
-    name: 'Test User',
+  "customer": {
+    "email": "test@example.com",
+    "name": "Test User"
   },
-  product_cart: [
+  "product_cart": [
     {
-      product_id: 'prod_123',
-      quantity: 1,
-      price: 1000,
-    },
+      "amount": 1000,
+      "product_id": "prod_123",
+      "quantity": 1
+    }
   ],
-  return_url: 'https://example.com/return',
-};
+  "return_url": "https://example.com/return"
+}
 
 export const mockSubscriptionPayload = {
-  billing: {
-    address: {
-      line1: '123 Main St',
-      city: 'San Francisco',
-      state: 'CA',
-      postal_code: '94102',
-      country: 'US',
-    },
+  "billing": {
+    "address": {
+      "city": "San Francisco",
+      "country": "US",
+      "state": "CA",
+      "street": "123 Main St",
+      "zipcode": "94102"
+    }
   },
-  customer: {
-    email: 'test@example.com',
-    name: 'Test User',
+  "customer": {
+    "email": "test@example.com",
+    "name": "Test User"
   },
-  product_id: 'prod_123',
-  quantity: 1,
-  return_url: 'https://example.com/return',
+  "product_cart": [
+    {
+      "amount": 1000,
+      "product_id": "prod_123",
+      "quantity": 1
+    }
+  ],
+  "return_url": "https://example.com/return"
 };
 
 import {
