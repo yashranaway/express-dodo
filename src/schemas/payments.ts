@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 const addressSchema = z.object({
-  line1: z.string().min(1),
+  street: z.string().min(1),
   city: z.string().min(1),
   state: z.string().optional(),
   postal_code: z.string().optional(),
@@ -31,7 +31,6 @@ export const createPaymentSchema = z.object({
   metadata: z.record(z.unknown()).optional(),
   allowed_payment_method_types: z.array(z.string()).optional(),
   discount_code: z.string().optional(),
-  show_saved_payment_methods: z.boolean().optional(),
-  tax_id: z.string().optional(),
+  show_saved_payment_methods: z.boolean().optional()
 });
 
