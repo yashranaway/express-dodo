@@ -1,12 +1,10 @@
 import { Router, Request, Response } from 'express';
-import DodoPayments from 'dodopayments';
-import { getEnvVar } from '../utils/env';
 import { validateRequest } from '../middleware/validation';
 import { createPaymentSchema } from '../schemas/payments';
 import { logger } from '../utils/logger';
+import DodoClient from '../utils/dodo-client';
 
 const router = Router();
-const client = new DodoPayments({ bearerToken: getEnvVar('DODO_PAYMENTS_API_KEY') });
 
 router.post('/', validateRequest(createPaymentSchema), async (req: Request, res: Response): Promise<void> => {
   try {
@@ -21,8 +19,8 @@ router.post('/', validateRequest(createPaymentSchema), async (req: Request, res:
       show_saved_payment_methods,
     } = req.body;
 
-    const payment = await client.checkoutSessions.create({
-      billing_address: billing,
+    const payment = await DodoClient.checkoutSessions.create({
+      billing_address: billing.address,
       customer,
       product_cart,
       return_url,
@@ -30,7 +28,7 @@ router.post('/', validateRequest(createPaymentSchema), async (req: Request, res:
       allowed_payment_method_types,
       discount_code,
       show_saved_payment_methods,
-      confirm: false,
+      confirm: true,
     });
 
     logger.info('Checkout session created', { sessionId: payment.session_id });
