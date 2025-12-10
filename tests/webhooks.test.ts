@@ -106,6 +106,37 @@ describe('Webhooks API', () => {
       expect(subscription?.status).toBe('on_hold');
     });
 
+    it('should handle subscription.cancelled event', async () => {
+      // First create a subscription
+      await Subscription.create({
+        subscriptionId: 'sub_123',
+        status: 'active',
+        productId: 'prod_123',
+      });
+
+      const mockEvent = {
+        type: 'subscription.cancelled',
+        data: {
+          subscription_id: 'sub_123',
+          cancellation_reason: 'user_request',
+        },
+      };
+
+      mockUnwrap.mockReturnValue(mockEvent);
+
+      await request(app)
+        .post('/webhooks/dodo')
+        .set('webhook-id', 'test-id')
+        .set('webhook-signature', 'test-signature')
+        .set('webhook-timestamp', '1234567890')
+        .send(JSON.stringify({}))
+        .expect(200);
+
+      // Verify status was updated
+      const subscription = await Subscription.findOne({ subscriptionId: 'sub_123' });
+      expect(subscription?.status).toBe('cancelled');
+    });
+
     it('should handle payment.succeeded event', async () => {
       const mockEvent = {
         type: 'payment.succeeded',

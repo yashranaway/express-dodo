@@ -16,6 +16,12 @@ export interface SubscriptionOnHoldData {
   subscription_id: string;
 }
 
+export interface SubscriptionCancelledData {
+  subscription_id: string;
+  cancellation_reason?: string;
+  metadata?: Record<string, unknown>;
+}
+
 export interface PaymentSucceededData {
   payment_id: string;
   total_amount: number;
@@ -31,5 +37,6 @@ export interface PaymentFailedData {
 export type WebhookEvent =
   | { type: 'subscription.active'; data: SubscriptionActiveData }
   | { type: 'subscription.on_hold'; data: SubscriptionOnHoldData }
+  | { type: 'subscription.cancelled'; data: SubscriptionCancelledData }
   | { type: 'payment.succeeded'; data: PaymentSucceededData }
   | { type: 'payment.failed'; data: PaymentFailedData };

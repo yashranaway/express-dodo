@@ -67,6 +67,18 @@ router.post('/', express.raw({ type: 'application/json' }), async (req: Request,
         logger.info('Subscription put on hold', { subscriptionId: data.subscription_id });
         break;
       }
+      case 'subscription.cancelled': {
+        const data = event.data;
+        await Subscription.updateOne(
+          { subscriptionId: data.subscription_id },
+          { status: 'cancelled' }
+        );
+        logger.info('Subscription cancelled', {
+          subscriptionId: data.subscription_id,
+          reason: 'cancellation_reason' in data ? data.cancellation_reason : undefined,
+        });
+        break;
+      }
       case 'payment.succeeded': {
         const p = event.data;
         await Payment.updateOne(
